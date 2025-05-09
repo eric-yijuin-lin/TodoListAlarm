@@ -2,3 +2,5 @@
 bin
 obj
 Credentials
+/ToDoListAlram/Properties/PublishProfiles/*.user
+/ToDoListAlram/*.user
