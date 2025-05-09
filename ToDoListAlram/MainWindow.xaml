@@ -34,21 +34,21 @@
                 <DataGridCheckBoxColumn/>
                 <DataGridTextColumn Header="目標" MinWidth="200" Binding="{Binding Goal}"/>
                 <DataGridTextColumn Header="步驟" MinWidth="200" Binding="{Binding Steps}"/>
-                <DataGridTextColumn Header="重要度" MinWidth="80" Binding="{Binding Importance}">
+                <DataGridTextColumn Header="重要度" MinWidth="50" Binding="{Binding Importance}">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Difficulty}" Value="2">
+                                <DataTrigger Binding="{Binding Importance}" Value="2">
                                     <Setter Property="Background" Value="Orange"/>
                                 </DataTrigger>
-                                <DataTrigger Binding="{Binding Difficulty}" Value="3">
+                                <DataTrigger Binding="{Binding Importance}" Value="3">
                                     <Setter Property="Background" Value="Red"/>
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="難度" MinWidth="80" Binding="{Binding Difficulty}">
+                <DataGridTextColumn Header="難度" MinWidth="50" Binding="{Binding Difficulty}">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Style.Triggers>
@@ -70,6 +70,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
+                <DataGridTextColumn Header="備註" MinWidth="100" Binding="{Binding Remarks}" />
             </DataGrid.Columns>
         </DataGrid>
         <StackPanel Orientation="Horizontal" Margin="10,10,10,10"  Grid.Row="1">
@@ -79,6 +80,7 @@
             <ComboBox x:Name="PauseTimeComboBox" Margin="10,10,0,0" Width="100" FontSize="16" SelectedIndex="0">
                 <ComboBoxItem Tag="5">5 分鐘</ComboBoxItem>
                 <ComboBoxItem Tag="10">10 分鐘</ComboBoxItem>
+                <ComboBoxItem Tag="25">一番茄</ComboBoxItem>
                 <ComboBoxItem Tag="30">30 分鐘</ComboBoxItem>
                 <ComboBoxItem Tag="60">1 小時</ComboBoxItem>
                 <ComboBoxItem Tag="120">2 小時</ComboBoxItem>
@@ -88,6 +90,7 @@
 
             <Button Content="暫停提醒" Margin="10,10,0,0" Width="100" Click="PauseButton_Click" FontSize="16"/>
             <Button Content="強制關閉" Margin="10,10,0,0" Width="100" Click="ProgramaticCloseButton_Click" FontSize="16"/>
+            <Button Content="重載資料" Margin="10,10,0,0" Width="100" Click="ReloadDataButton_Click" FontSize="16"/>
         </StackPanel>
     </Grid>
 </Window>

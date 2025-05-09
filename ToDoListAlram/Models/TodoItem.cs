@@ -29,5 +29,6 @@ namespace ToDoListAlram.Models
         public string Importance { get; set; } = "0";
         public string Difficulty { get; set; } = "0";
         public DateTime DueDate { get; set; } // 可視需要改為 DateTime
+        public string? Remarks { get; set; }
     }
 }

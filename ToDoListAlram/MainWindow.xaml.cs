@@ -33,7 +33,7 @@ namespace ToDoListAlram
         private string allowCloseKey = "";
         private MainViewModel mainViewModel;
         private DispatcherTimer timer = new DispatcherTimer();
-        private BypassGuard bypassGuard = new BypassGuard();
+        private BypassGuard bypassGuard;
         private DateTime _pauseUntil = DateTime.Now;
 
 
@@ -44,6 +44,12 @@ namespace ToDoListAlram
             InitializeTimer();
             InitializeTodoList();
             InitializeClosingEvents();
+            this.bypassGuard = new BypassGuard(this.mainViewModel.TodoList);
+            this.UpdateStatusLabel();
+            this.Loaded += (s, e) =>
+            {
+                this.BringWindowToFront();
+            };
         }
 
         private void InitializeTodoList()
@@ -63,22 +69,21 @@ namespace ToDoListAlram
                 MessageBox.Show("格式錯誤：" + formatEx.Message);
             }
             this.TodoDataGrid.ItemsSource = mainViewModel.TodoList;
-            this.UpdateStatusLabel();
-            this.Loaded += (s, e) =>
-            {
-                this.BringWindowToTop();
-            };
         }
 
         private void InitializeTimer()
         {
-            TimeSpan interval = TimeSpan.Zero;
+            string intervalArg = "5";
+            var args = Environment.GetCommandLineArgs();
+            foreach (string arg in args)
+            {
+                if (arg.StartsWith("--interval="))
+                {
+                    intervalArg = arg.Substring("--interval=".Length);
+                }
+            }
             timer = new DispatcherTimer();
-#if DEBUG
-            timer.Interval = TimeSpan.FromSeconds(5);
-#else
-            timer.Interval = TimeSpan.FromMinutes(1);
-#endif
+            timer.Interval = TimeSpan.FromSeconds(Convert.ToInt32(intervalArg));
             timer.Tick += _timer_Tick;
             timer.Start();
         }
@@ -87,7 +92,7 @@ namespace ToDoListAlram
         {
             if (enableNotify && mainViewModel.TodoList.Any())
             {
-                this.BringWindowToTop();
+                this.BringWindowToFront();
             }
             else 
             {
@@ -134,33 +139,28 @@ namespace ToDoListAlram
 
 
 
-        private void BringWindowToTop()
+        private void BringWindowToFront()
         {
             this.Topmost = true;
             if (this.WindowState == WindowState.Minimized)
             {
                 this.WindowState = WindowState.Normal;
             }
+            this.Left = 400;
+            this.Top = 300;
             this.Topmost = false;
         }
 
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = (ComboBoxItem)this.PauseTimeComboBox.SelectedItem;
-            int pauseMinute = int.Parse(selectedItem.Tag.ToString()!);
-            if (pauseMinute > 10)
+            int pauseMinute = Convert.ToInt32(selectedItem.Tag.ToString()!);
+            string bypassResult = this.bypassGuard.RequestPause(this.BypassKeyInput.Text, pauseMinute);
+            if (bypassResult != "OK")
             {
-                if (mainViewModel.HasUrgentTodoItem)
-                {
-                    MessageBox.Show("待辦清單中有緊急事項，無法暫停超過 10 分鐘");
-                    return;
-                }
-                this.bypassGuard.RequestPause(this.BypassKeyInput.Text);
-                if (!this.bypassGuard.CanPause)
-                {
-                    MessageBox.Show("密碼錯誤 (yyyyMMddHHm 十一碼的 MD5)");
-                    return;
-                }
+
+                MessageBox.Show(bypassResult);
+                return;
             }
             this.PauseNotify(pauseMinute * 60);
             this.Topmost = false;
@@ -168,32 +168,34 @@ namespace ToDoListAlram
 
         private void ProgramaticCloseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.bypassGuard.CanClose)
+            if (this.bypassGuard.IsSecondVerifying)
             {
-                this.Close();
-            }
-            else if (this.bypassGuard.IsSecondVerifying)
-            {
-                bool valid = this.bypassGuard.RequestCloseBySecondVerify(this.BypassKeyInput.Text);
-                if (!valid)
+                string requestResult = this.bypassGuard.RequestCloseBySecondVerify(this.BypassKeyInput.Text);
+                if (requestResult != "OK")
                 {
-                    MessageBox.Show("密碼錯誤，需以一階 MD5 的前半段再做一次 MD5");
+                    MessageBox.Show(requestResult);
                     return;
                 }
                 this.Close();
             }
             else
             {
-                bool valid = this.bypassGuard.RequestClose(this.BypassKeyInput.Text);
-                if (!valid)
+                string requestResult = this.bypassGuard.RequestClose(this.BypassKeyInput.Text);
+                if (requestResult != "OK")
                 {
-                    MessageBox.Show("密碼錯誤 (yyyyMMddHHm 十一碼的 MD5)");
+                    MessageBox.Show(requestResult);
                     return;
                 }
                 MessageBox.Show("一階認證成功，請以一階 MD5 的前半段再做一次 MD5 當作密碼");
             }
         }
 
+        private void ReloadDataButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.mainViewModel.LoadTodoList();
+            this.bypassGuard.ResetTodoList(this.mainViewModel.TodoList);
+            this.TodoDataGrid.ItemsSource = this.mainViewModel.TodoList;
+        }
 
 
         private void PauseNotify(int seconds)
@@ -206,7 +208,7 @@ namespace ToDoListAlram
         private void ResumeNotify()
         {
             enableNotify = true;
-            this.BringWindowToTop();
+            this.BringWindowToFront();
         }
 
         private void UpdateStatusLabel()

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Credentials\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3757" />
+  </ItemGroup>
+
+    <ItemGroup>
+	    <None Update="credentials\*.json">
+		    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	    </None>
+    </ItemGroup>
+</Project>

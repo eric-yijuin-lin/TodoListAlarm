@@ -21,9 +21,10 @@ namespace ToDoListAlram.Models.Services
 
     internal class BypassGuard
     {
-        public BypassGuard()
+        private List<TodoItem> todoList;
+        public BypassGuard(List<TodoItem> todoList)
         {
-
+            this.todoList = todoList;
         }
 
         private BypassPermissionEnum BypassPermission = BypassPermissionEnum.NotAllow;
@@ -46,6 +47,26 @@ namespace ToDoListAlram.Models.Services
 
         public bool IsSecondVerifying { get { return this.BypassPermission == BypassPermissionEnum.SecondVerify; } }
 
+        public bool HasUrgentTodoItem
+        {
+            get
+            {
+                if (this.todoList == null || this.todoList.Count == 0)
+                {
+                    return false;
+                }
+                if (this.todoList.Any(x => Convert.ToInt32(x.Importance) > 2 && (x.DueDate - DateTime.Now).TotalDays < 2))
+                {
+                    return true;
+                }
+                if (this.todoList.Any(x => (x.DueDate - DateTime.Now).TotalDays < 1))
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
         private string GetMd5BypassKey(DateTime dateTime)
         {
             string timeString = dateTime.ToString("yyyyMMddHHmm").Substring(0, 11);
@@ -60,16 +81,36 @@ namespace ToDoListAlram.Models.Services
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
 
-        public bool RequestPause(string inputText)
+        public string RequestPause(string inputText, int pauseMinute)
         {
+            if (pauseMinute < 25)
+            {
+                return "OK";
+            }
+            if (pauseMinute == 25)
+            {
+                if (inputText == "tomato")
+                {
+                    return "OK";
+                }
+                else
+                {
+                    return "進入番茄鐘需要輸入「番茄」的英文";
+                }
+            }
+            if (this.HasUrgentTodoItem)
+            {
+                return "待辦清單中有緊急事項，無法暫停超過 25 分鐘";
+            }
+
             string bypassKey = this.GetMd5BypassKey(DateTime.Now);
             if (inputText == bypassKey)
             {
                 this.BypassPermission = BypassPermissionEnum.CanPause;
-                return true;
+                return "OK";
             }
             this.BypassPermission = BypassPermissionEnum.NotAllow;
-            return false;
+            return "密碼錯誤 (yyyyMMddHHm 十一碼的 MD5)";
         }
 
         public bool RequestCloseByShutDown()
@@ -78,31 +119,26 @@ namespace ToDoListAlram.Models.Services
             return true;
         }
 
-        public bool RequestCloseBySecondVerify(string inputText)
+        public string RequestCloseBySecondVerify(string inputText)
         {
             if (String.IsNullOrEmpty(inputText) 
                 || inputText != this.secondVerifyKey
                 || this.BypassPermission != BypassPermissionEnum.SecondVerify)
             {
                 this.BypassPermission = BypassPermissionEnum.NotAllow;
-                return false;
+                return "密碼錯誤，需以一階 MD5 的前半段再做一次 MD5";
             }
             this.BypassPermission = BypassPermissionEnum.CanClose;
-            return true;
+            return "OK";
         }
 
-        public bool RequestClose(string inputText)
+        public string RequestClose(string inputText)
         {
             if (this.BypassPermission == BypassPermissionEnum.CanClose
                 || this.BypassPermission == BypassPermissionEnum.ShuttingDown
                 || this.BypassPermission == BypassPermissionEnum.SecondVerify)
             {
-                return true;
-            }
-            if (String.IsNullOrEmpty(inputText))
-            {
-                this.BypassPermission = BypassPermissionEnum.NotAllow;
-                return false;
+                return "OK";
             }
 
             string bypassKey = GetMd5BypassKey(DateTime.Now);
@@ -110,10 +146,15 @@ namespace ToDoListAlram.Models.Services
             {
                 this.BypassPermission = BypassPermissionEnum.SecondVerify;
                 this.secondVerifyKey = this.GetMd5BypassKey(bypassKey.Substring(0, bypassKey.Length / 2));
-                return true;
+                return "OK";
             }
             this.BypassPermission = BypassPermissionEnum.NotAllow;
-            return false;
+            return "密碼錯誤 (yyyyMMddHHm 十一碼的 MD5)";
+        }
+
+        public void ResetTodoList(List<TodoItem> todoList)
+        {
+            this.todoList = todoList;
         }
     }
 }
