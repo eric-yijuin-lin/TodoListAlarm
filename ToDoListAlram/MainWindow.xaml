@@ -20,6 +20,7 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <DataGrid x:Name="TodoDataGrid" 
                   d:ItemsSource="{d:SampleData ItemCount=5}" 
@@ -73,10 +74,14 @@
                 <DataGridTextColumn Header="備註" MinWidth="100" Binding="{Binding Remarks}" />
             </DataGrid.Columns>
         </DataGrid>
-        <StackPanel Orientation="Horizontal" Margin="10,10,10,10"  Grid.Row="1">
-            <Label x:Name="StatusLabel" Content="狀態：" Margin="10" FontSize="16"/>
+        <StackPanel Orientation="Horizontal" Margin="10,10,10,10"  Grid.Row="1" HorizontalAlignment="Center">
+            <Image x:Name="TomatoImage" Width="100" Height="100" Source="pack://application:,,,/Images/tomato.png" Visibility="Hidden"></Image>
         </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="10,10,10,10"  Grid.Row="2">
+            <Image x:Name="PauseLightImage" Width="50" Height="50" Source="pack://application:,,,/Images/red_light.png" Visibility="Visible"></Image>
+            <Label x:Name="StatusLabel" Content="暫停到：" Margin="10,10,0,0" FontSize="16"/>
+        </StackPanel>
+        <StackPanel Orientation="Horizontal" Margin="10,10,10,10"  Grid.Row="3">
             <ComboBox x:Name="PauseTimeComboBox" Margin="10,10,0,0" Width="100" FontSize="16" SelectedIndex="0">
                 <ComboBoxItem Tag="5">5 分鐘</ComboBoxItem>
                 <ComboBoxItem Tag="10">10 分鐘</ComboBoxItem>
@@ -90,7 +95,7 @@
 
             <Button Content="暫停提醒" Margin="10,10,0,0" Width="100" Click="PauseButton_Click" FontSize="16"/>
             <Button Content="強制關閉" Margin="10,10,0,0" Width="100" Click="ProgramaticCloseButton_Click" FontSize="16"/>
-            <Button Content="重載資料" Margin="10,10,0,0" Width="100" Click="ReloadDataButton_Click" FontSize="16"/>
+            <Button Content="重載資料" Margin="10,10,0,0" Width="100" Click="ReloadDataButton_Click" FontSize="16" Background="LightGreen"/>
         </StackPanel>
     </Grid>
 </Window>

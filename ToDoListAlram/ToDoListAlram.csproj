@@ -9,11 +9,27 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Images\green_light.png" />
+    <None Remove="Images\red_light.png" />
+    <None Remove="Images\tomato.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Credentials\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.69.0.3757" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Images\red_light.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\green_light.png">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
+    <Resource Include="Images\tomato.png" />
   </ItemGroup>
 
     <ItemGroup>

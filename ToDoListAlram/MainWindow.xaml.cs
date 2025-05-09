@@ -200,21 +200,50 @@ namespace ToDoListAlram
 
         private void PauseNotify(int seconds)
         {
-            enableNotify = false;
-            _pauseUntil = DateTime.Now.AddSeconds(seconds);
+            this.enableNotify = false;
+            this._pauseUntil = DateTime.Now.AddSeconds(seconds);
+            this.BypassKeyInput.Text = "";
             this.UpdateStatusLabel();
+            this.UpdatePauseLightImage();
+            if (seconds == 25 * 60)
+            {
+                this.ToggleTomatoImage(true);
+            }
         }
 
         private void ResumeNotify()
         {
             enableNotify = true;
             this.BringWindowToFront();
+            this.UpdatePauseLightImage();
+            this.ToggleTomatoImage(false);
+        }
+
+        private void UpdatePauseLightImage()
+        {
+            string imageFile = this.enableNotify ? "red_light.png" : "green_light.png";
+            this.PauseLightImage.Source = new BitmapImage(
+                new Uri($"pack://application:,,,/images/{imageFile}")
+            );
+        }
+
+        private void ToggleTomatoImage(bool show)
+        {
+            if (show)
+            {
+                this.TomatoImage.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                this.TomatoImage.Visibility = Visibility.Hidden;
+            }
         }
 
         private void UpdateStatusLabel()
         {
+            // TODO: refactor to view model
             string pauseUntilString = enableNotify ? "N/A" : _pauseUntil.ToString("hh:mm:ss");
-            this.StatusLabel.Content = $"狀態：enableNotify={enableNotify},  pauseUntil={pauseUntilString}";
+            this.StatusLabel.Content = $"暫停到={pauseUntilString}";
         }
     }
 }
