@@ -28,7 +28,8 @@ namespace ToDoListAlram.Models
         public string Steps { get; set; } = "";
         public string Importance { get; set; } = "0";
         public string Difficulty { get; set; } = "0";
-        public DateTime DueDate { get; set; } // 可視需要改為 DateTime
+        public bool IsWaiting { get; set; }
+        public DateTime DueDate { get; set; }
         public string? Remarks { get; set; }
     }
 }

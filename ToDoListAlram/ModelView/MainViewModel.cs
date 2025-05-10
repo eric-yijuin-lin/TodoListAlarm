@@ -36,6 +36,7 @@ namespace ToDoListAlram.ModelView
                     Steps = row[1]?.ToString()!,
                     Importance = row[2]?.ToString()!,
                     Difficulty = row[3]?.ToString()!,
+                    IsWaiting = Convert.ToBoolean(row[4]?.ToString()!),
                     DueDate = String.IsNullOrEmpty(row[6]?.ToString()) ? DateTime.Now.AddDays(7) : DateTime.Parse(row[6]?.ToString()!),
                     Remarks = row.Count == 8 ? row[7]?.ToString() : "",
                 })

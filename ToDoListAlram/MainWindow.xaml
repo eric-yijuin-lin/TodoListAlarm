@@ -13,7 +13,7 @@
 
     <Window.Resources>
         <conv:DateToStringConverter x:Key="DateToStringConverter" />
-        <conv:DateToColorConverter  x:Key="DateToColorConverter" />
+        <conv:DateCellStyleConverter  x:Key="DateCellStyleConverter" />
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -22,8 +22,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <DataGrid x:Name="TodoDataGrid" 
-                  d:ItemsSource="{d:SampleData ItemCount=5}" 
+        <DataGrid x:Name="TodoDataGrid"
                   AutoGenerateColumns="False" 
                   Grid.ColumnSpan="2"
                   Grid.Row="0"
@@ -33,8 +32,8 @@
                   FontSize="14">
             <DataGrid.Columns>
                 <DataGridCheckBoxColumn/>
-                <DataGridTextColumn Header="目標" MinWidth="200" Binding="{Binding Goal}"/>
-                <DataGridTextColumn Header="步驟" MinWidth="200" Binding="{Binding Steps}"/>
+                <DataGridTextColumn Header="目標" MinWidth="180" Binding="{Binding Goal}"/>
+                <DataGridTextColumn Header="步驟" MinWidth="180" Binding="{Binding Steps}"/>
                 <DataGridTextColumn Header="重要度" MinWidth="50" Binding="{Binding Importance}">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
@@ -63,11 +62,30 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
+
+                <!-- ReadOnly CheckBox Column -->
+                <DataGridCheckBoxColumn Header="等待中" Binding="{Binding IsWaiting}" IsReadOnly="True">
+                </DataGridCheckBoxColumn>
                 <DataGridTextColumn Header="期限" MinWidth="100"  Binding="{Binding DueDate, StringFormat='yyyy-MM-dd'}">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="Text" Value="{Binding DueDate, Converter={StaticResource DateToStringConverter}}"/>
-                            <Setter Property="Background" Value="{Binding DueDate, Converter={StaticResource DateToColorConverter}}"/>
+                            <Setter Property="Foreground">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource DateCellStyleConverter}" ConverterParameter="Foreground">
+                                        <Binding Path="DueDate" />
+                                        <Binding Path="IsWaiting" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <MultiBinding Converter="{StaticResource DateCellStyleConverter}" ConverterParameter="Background">
+                                        <Binding Path="DueDate" />
+                                        <Binding Path="IsWaiting" />
+                                    </MultiBinding>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
