@@ -68,6 +68,10 @@ namespace ToDoListAlram
             {
                 MessageBox.Show("格式錯誤：" + formatEx.Message);
             }
+            finally
+            {
+                this.Close();
+            }
             this.TodoDataGrid.ItemsSource = mainViewModel.TodoList;
         }
 
