@@ -21,11 +21,7 @@ namespace ToDoListAlram.Models.Services
 
     internal class BypassGuard
     {
-        private List<TodoItem> todoList;
-        public BypassGuard(List<TodoItem> todoList)
-        {
-            this.todoList = todoList;
-        }
+        private List<TodoItem>? todoList;
 
         private BypassPermissionEnum BypassPermission = BypassPermissionEnum.NotAllow;
         private string secondVerifyKey = "";
@@ -55,11 +51,16 @@ namespace ToDoListAlram.Models.Services
                 {
                     return false;
                 }
-                if (this.todoList.Any(x => Convert.ToInt32(x.Importance) > 2 && (x.DueDate - DateTime.Now).TotalDays < 2))
+                if (this.todoList.Any(x => 
+                    (x.DueDate - DateTime.Now).TotalDays < 1 
+                    && !x.IsWaiting))
                 {
                     return true;
                 }
-                if (this.todoList.Any(x => (x.DueDate - DateTime.Now).TotalDays < 1))
+                if (this.todoList.Any(x => 
+                    Convert.ToInt32(x.Importance) > 2 
+                    && (x.DueDate - DateTime.Now).TotalDays < 2 
+                    && !x.IsWaiting))
                 {
                     return true;
                 }

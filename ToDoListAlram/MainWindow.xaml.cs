@@ -44,7 +44,7 @@ namespace ToDoListAlram
             InitializeTimer();
             InitializeTodoList();
             InitializeClosingEvents();
-            this.bypassGuard = new BypassGuard(this.mainViewModel.TodoList);
+            InitializeBypassGuard();
             this.UpdateStatusLabel();
             this.Loaded += (s, e) =>
             {
@@ -54,22 +54,16 @@ namespace ToDoListAlram
 
         private void InitializeTodoList()
         {
-            // _todoList = TodoItem.GetTestList();
-            mainViewModel = new MainViewModel();
-            try
-            {
-                mainViewModel.LoadTodoList();
-            }
-            catch (System.Net.Http.HttpRequestException requestEx)
-            {
-                MessageBox.Show("HTTP 錯誤：" + requestEx.Message);
-            }
-            catch (System.FormatException formatEx)
-            {
-                MessageBox.Show("格式錯誤：" + formatEx.Message);
-            }
-            this.TodoDataGrid.ItemsSource = mainViewModel.TodoList;
+            this.mainViewModel = new MainViewModel();
+            this.ReloadTodoList();
         }
+
+        private void InitializeBypassGuard()
+        {
+            this.bypassGuard = new BypassGuard();
+            this.bypassGuard.ResetTodoList(this.mainViewModel.TodoList);
+        }
+
 
         private void InitializeTimer()
         {
@@ -192,9 +186,8 @@ namespace ToDoListAlram
 
         private void ReloadDataButton_Click(object sender, RoutedEventArgs e)
         {
-            this.mainViewModel.LoadTodoList();
+            this.ReloadTodoList();
             this.bypassGuard.ResetTodoList(this.mainViewModel.TodoList);
-            this.TodoDataGrid.ItemsSource = this.mainViewModel.TodoList;
         }
 
 
@@ -244,6 +237,18 @@ namespace ToDoListAlram
             // TODO: refactor to view model
             string pauseUntilString = enableNotify ? "N/A" : _pauseUntil.ToString("hh:mm:ss");
             this.StatusLabel.Content = $"暫停到={pauseUntilString}";
+        }
+
+        private void ReloadTodoList()
+        {
+            this.mainViewModel.LoadTodoList();
+            if (mainViewModel.HasError("Load"))
+            {
+                string message = mainViewModel.GetErrorMessage("Load");
+                MessageBox.Show(message);
+                return;
+            }
+            this.TodoDataGrid.ItemsSource = this.mainViewModel.TodoList;
         }
     }
 }

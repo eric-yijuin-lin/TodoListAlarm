@@ -31,5 +31,27 @@ namespace ToDoListAlram.Models
         public bool IsWaiting { get; set; }
         public DateTime DueDate { get; set; }
         public string? Remarks { get; set; }
+
+
+        public static TodoItem FromGoogleSheetRow(IList<object> row)
+        {
+            if (row[4]?.ToString() == "TRUE")
+            {
+                if (row.Count < 8 || String.IsNullOrEmpty(row[7].ToString()))
+                {
+                    throw new InvalidOperationException("「等待中」欄位為 TRUE 時必須有備註說明！");
+                }
+            }
+            return new TodoItem
+            {
+                Goal = row[0]?.ToString()!,
+                Steps = row[1]?.ToString()!,
+                Importance = row[2]?.ToString()!,
+                Difficulty = row[3]?.ToString()!,
+                IsWaiting = Convert.ToBoolean(row[4]?.ToString()!),
+                DueDate = String.IsNullOrEmpty(row[6]?.ToString()) ? DateTime.Now.AddDays(7) : DateTime.Parse(row[6]?.ToString()!),
+                Remarks = row.Count == 8 ? row[7]?.ToString() : "",
+            };
+        }
     }
 }
