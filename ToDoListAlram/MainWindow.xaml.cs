@@ -181,6 +181,7 @@ namespace ToDoListAlram
                     return;
                 }
                 MessageBox.Show("一階認證成功，請以一階 MD5 的前半段再做一次 MD5 當作密碼");
+                this.BypassKeyInput.Text = "";
             }
         }
 
@@ -249,6 +250,20 @@ namespace ToDoListAlram
                 return;
             }
             this.TodoDataGrid.ItemsSource = this.mainViewModel.TodoList;
+        }
+
+        private void FilterRadio_Checked(object sender, RoutedEventArgs e)
+        {
+            if (this.mainViewModel == null) // TODO: 改成從 Window_Loaded 事件便免
+            {
+                Debug.WriteLine("mainViewModel 尚未初始化，跳過");
+                return;
+            }
+            if (sender is RadioButton rb && rb.Tag is string tag)
+            {
+                var viewingList = this.mainViewModel.GetFilteredList(tag);
+                this.TodoDataGrid.ItemsSource = viewingList;
+            }
         }
     }
 }

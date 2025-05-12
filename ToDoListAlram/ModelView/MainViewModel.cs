@@ -84,5 +84,28 @@ namespace ToDoListAlram.ModelView
             }
             return message;
         }
+
+        public List<TodoItem> GetFilteredList(string durationTag)
+        {
+            double remainDay = double.MaxValue; ;
+            switch (durationTag)
+            {
+                case "Week":
+                    remainDay = 7;
+                    break;
+                case "OneMonth":
+                    remainDay = 30;
+                    break;
+                case "TwoMonths":
+                    remainDay = 60;
+                    break;
+                default:
+                    break;
+            }
+            return this.TodoList
+                .Where(
+                    x => (x.DueDate - DateTime.Now).TotalDays < remainDay)
+                .ToList();
+        }
     }
 }
