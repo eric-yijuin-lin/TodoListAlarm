@@ -1,7 +1,9 @@
-﻿using Google.Apis.Sheets.v4.Data;
+﻿using Google;
+using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,9 +15,6 @@ namespace ToDoListAlram.ModelView
     // TODO: 改成 INotifyPropertyChanged + ICommand 
     internal class MainViewModel
     {
-        private readonly string _sheetId = "1DHrseaJEFdbsAcM3NP_UvyfMkjFuH82dYx6uH_v8Ov0";
-        private readonly string _todoListTabName = "Todo";
-        private readonly string _rewardTabName = "獎勵";
         private readonly TodoSheetService todoSheetService;
         public Dictionary<string, Dictionary<string, Exception>> errorDict = new ();
 
@@ -32,7 +31,14 @@ namespace ToDoListAlram.ModelView
         {
             try
             {
-                this.TodoList = todoSheetService.GetTodoItems(_sheetId, _todoListTabName, null);
+                this.TodoList = todoSheetService
+                    .GetTodoItems()
+                    .OrderBy(item => item.DueDate)
+                    .ThenByDescending(item => int.Parse(item.Importance))
+                    .ThenBy(item => int.Parse(item.Difficulty))
+                    .ThenBy(item => item.Goal)
+                    .ThenBy(item => item.Steps)
+                    .ToList();
             }
             catch (System.Net.Http.HttpRequestException requestEx)
             {
@@ -48,38 +54,29 @@ namespace ToDoListAlram.ModelView
             }
         }
 
-        public void CompleteTodoItems(List<TodoItem>? todoItems)
+        public void CompleteTodoItems(List<TodoItem> itemsToComplete)
         {
-            throw new NotImplementedException();
-            //if (todoItems == null || todoItems.Count == 0)
-            //{
-            //    return;
-            //}
-
-            //var updateValueRanges = this.GetCompleteTodoRequest(_todoListTabName, todoItems);
-            //this.todoSheetService.Spreadsheets.Values.BatchUpdate(updateValueRanges);
-        }
-
-        private BatchUpdateValuesRequest GetCompleteTodoRequest(string sheetName, List<TodoItem> todoItems, string columnCode = "F")
-        {
-            var valueRanges = new List<ValueRange>();
-            foreach (var item in todoItems)
+            if (itemsToComplete.Count == 0)
             {
-                valueRanges.Add(new ValueRange
-                {
-                    Range = $"{sheetName}|{columnCode}{item.GoogleSheetRowIndex}",
-                    Values = new List<IList<object>>
-                    {
-                        new List<object> { "TRUE" }
-                    }
-                });
+                return;
             }
-            var updateRequest = new BatchUpdateValuesRequest()
+
+            try
             {
-                ValueInputOption = "USER_ENTERED",
-                Data = valueRanges
-            };
-            return updateRequest;
+                this.todoSheetService.CompleteTodoItems(itemsToComplete);
+            }
+            catch (System.Net.Http.HttpRequestException requestEx)
+            {
+                this.SetErrorDictionary("Update", "Http", requestEx);
+            }
+            catch (GoogleApiException googleEx)
+            {
+                this.SetErrorDictionary("Update", "Api", googleEx);
+            }
+            catch (InvalidOperationException operationEx)
+            {
+                this.SetErrorDictionary("Update", "Operation", operationEx);
+            }
         }
 
         private void SetErrorDictionary(string taskType, string errorType, Exception ex)

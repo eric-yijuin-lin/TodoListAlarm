@@ -271,7 +271,15 @@ namespace ToDoListAlram
             var checkedItems = this.mainViewModel.TodoList
                 .Where(row => row.IsChecked)
                 .ToList();
-            int debug = 0;
+            this.mainViewModel.CompleteTodoItems(checkedItems);
+
+            if (mainViewModel.HasError("Update"))
+            {
+                string message = mainViewModel.GetErrorMessage("Update");
+                MessageBox.Show(message);
+                return;
+            }
+            this.ReloadTodoList();
         }
     }
 }

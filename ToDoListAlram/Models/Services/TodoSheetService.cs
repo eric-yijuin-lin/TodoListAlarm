@@ -17,8 +17,6 @@ namespace ToDoListAlram.Models.Services
     {
         public static SheetsService CreateSheetsApi(string credentialPath)
         {
-            //using var stream = new FileStream(credentialPath, FileMode.Open, FileAccess.Read);
-
             var credential = GoogleCredential
                 .FromFile(credentialPath)
                 .CreateScoped(SheetsService.Scope.Spreadsheets);
@@ -34,6 +32,11 @@ namespace ToDoListAlram.Models.Services
 
     public class TodoSheetService
     {
+        private readonly string _sheetId = "1DHrseaJEFdbsAcM3NP_UvyfMkjFuH82dYx6uH_v8Ov0";
+        private readonly string _todoListTabName = "Todo";
+        private readonly string _rewardTabName = "獎勵";
+        private readonly string _completedColumnCode = "F";
+        private readonly string _rewardCell = "H1";
         private readonly SheetsService _googleSheetService;
 
         public TodoSheetService(SheetsService service)
@@ -41,11 +44,10 @@ namespace ToDoListAlram.Models.Services
             _googleSheetService = service;
         }
 
-        private IList<IList<object>> ReadRawData(string sheetId, string tabName, string? range)
+        private IList<IList<object>> GetSheetRows(string sheetId, string tabName)
         {
-            string rangeWithTab = String.IsNullOrEmpty(range) ? tabName : $"{tabName}|{range}";
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                _googleSheetService.Spreadsheets.Values.Get(sheetId, rangeWithTab);
+                _googleSheetService.Spreadsheets.Values.Get(sheetId, tabName);
             ValueRange response = request.Execute();
             IList<IList<object>> values = response.Values;
             if (values != null)
@@ -55,9 +57,112 @@ namespace ToDoListAlram.Models.Services
             return new List<IList<object>>();
         }
 
-        public List<TodoItem> GetTodoItems(string sheetId, string tabName, string? range = null)
+        public void CompleteTodoItems(List<TodoItem> itemsToComplete)
         {
-            var sheetRows = this.ReadRawData(sheetId, tabName, range);
+            var updateStatusResponse = this.UpdateCompletedStatus(itemsToComplete);
+            var appendRecordResponse = this.AppendCompletedRecord(itemsToComplete);
+            var updatePointResponse = this.UpdateRewardPoint(itemsToComplete);
+            if (updateStatusResponse.TotalUpdatedRows <= 0
+                || appendRecordResponse.Updates.UpdatedRows <= 0
+                || updatePointResponse.UpdatedRows <= 0)
+            {
+                throw new InvalidOperationException("更新 Todo、寫入 Record 或更新點數出現 0 affected response");
+            }
+        }
+
+        private ValueRange GetAppendRewardValueRange(List<TodoItem> itemsToComplete)
+        {
+            var rowValues = itemsToComplete
+                .Select(item => (IList<object>)new List<object>
+                {
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                    item.Goal,
+                    item.Importance,
+                    item.Difficulty,
+                    Convert.ToInt32(item.Importance) * Convert.ToInt32(item.Difficulty)
+                })
+                .ToList();
+            return new ValueRange
+            {
+                Values = rowValues
+            };
+        }
+
+
+        private BatchUpdateValuesResponse UpdateCompletedStatus(List<TodoItem> itemsToComplete)
+        {
+            var requestBody = this.GetCompleteTodoRequest(itemsToComplete);
+            var updateRequest = _googleSheetService.Spreadsheets.Values.BatchUpdate(requestBody, _sheetId);
+            return updateRequest.Execute();
+        }
+
+        private AppendValuesResponse AppendCompletedRecord(List<TodoItem> itemsToComplete)
+        {
+            var valueRange = GetAppendRewardValueRange(itemsToComplete);
+            string appendRange = $"{_rewardTabName}!A1";
+            var appendRequest = _googleSheetService.Spreadsheets.Values.Append(valueRange, _sheetId, appendRange);
+            appendRequest.ValueInputOption = SpreadsheetsResource.ValuesResource.AppendRequest.ValueInputOptionEnum.USERENTERED;
+            appendRequest.InsertDataOption = SpreadsheetsResource.ValuesResource.AppendRequest.InsertDataOptionEnum.INSERTROWS;
+            var response = appendRequest.Execute();
+            return response;
+        }
+
+        private UpdateValuesResponse UpdateRewardPoint(List<TodoItem> itemsToComplete)
+        {
+            string currentPointRange = $"{_rewardTabName}!{_rewardCell}";
+            int currentPoint = this.GetCurrentRewardPoint(currentPointRange);
+            int addPoint = itemsToComplete.Sum(x => Convert.ToInt32(x.Difficulty) * Convert.ToInt32(x.Importance));
+            var valueRange = new ValueRange
+            {
+                Values = new List<IList<object>>
+                {
+                    new List<object>
+                    {
+                        currentPoint + addPoint
+                    }
+                }
+            };
+            var request = _googleSheetService.Spreadsheets.Values.Update(valueRange, _sheetId, currentPointRange);
+            request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
+            return request.Execute();
+        }
+
+        private BatchUpdateValuesRequest GetCompleteTodoRequest( List<TodoItem> todoItems)
+        {
+            var valueRanges = new List<ValueRange>();
+            foreach (var item in todoItems)
+            {
+                valueRanges.Add(new ValueRange
+                {
+                    Range = $"{_todoListTabName}!{_completedColumnCode}{item.GoogleSheetRowIndex}",
+                    Values = new List<IList<object>>
+                    {
+                        new List<object> { "TRUE" }
+                    }
+                });
+            }
+            var updateRequest = new BatchUpdateValuesRequest()
+            {
+                ValueInputOption = "USER_ENTERED",
+                Data = valueRanges
+            };
+            return updateRequest;
+        }
+
+        private int GetCurrentRewardPoint(string currentPointRange)
+        {
+            var response = _googleSheetService.Spreadsheets.Values.Get(_sheetId, currentPointRange).Execute();
+            string? rawValue = response?.Values?.FirstOrDefault()?.FirstOrDefault()?.ToString();
+            if (!Int32.TryParse(rawValue, out int currentPoint))
+            {
+                throw new InvalidOperationException($"無法取得目前獎勵點數。rawValue={rawValue}");
+            }
+            return currentPoint;
+        }
+
+        public List<TodoItem> GetTodoItems()
+        {
+            var sheetRows = this.GetSheetRows(_sheetId, _todoListTabName);
             var todoList = new List<TodoItem>();
             for (int i = 1; i < sheetRows.Count; i++)
             {
