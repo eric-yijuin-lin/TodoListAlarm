@@ -13,7 +13,10 @@ namespace ToDoListAlram.ModelView
     // TODO: 改成 INotifyPropertyChanged + ICommand 
     internal class MainViewModel
     {
-        private readonly GoogleSheetService googleSheetService;
+        private readonly string _sheetId = "1DHrseaJEFdbsAcM3NP_UvyfMkjFuH82dYx6uH_v8Ov0";
+        private readonly string _todoListTabName = "Todo";
+        private readonly string _rewardTabName = "獎勵";
+        private readonly TodoSheetService todoSheetService;
         public Dictionary<string, Dictionary<string, Exception>> errorDict = new ();
 
         public List<TodoItem> TodoList { get; private set; } = new List<TodoItem>();
@@ -22,25 +25,14 @@ namespace ToDoListAlram.ModelView
         {
             string credPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Credentials", "google-sheet-api.json");
             var sheetApi = GoogleCredentialProvider.CreateSheetsApi(credPath);
-            googleSheetService = new GoogleSheetService(sheetApi);
+            this.todoSheetService = new TodoSheetService(sheetApi);
         }
-
 
         public void LoadTodoList()
         {
             try
             {
-                var sheetRows = googleSheetService.ReadSheet("1DHrseaJEFdbsAcM3NP_UvyfMkjFuH82dYx6uH_v8Ov0", "Todo", null);
-                this.TodoList = sheetRows
-                    .Skip(1)
-                    .Where(row => row[5]?.ToString() == "FALSE" && !String.IsNullOrEmpty(row[0].ToString()))
-                    .Select(TodoItem.FromGoogleSheetRow)
-                    .OrderBy(item => item.DueDate)
-                    .ThenByDescending(item => int.Parse(item.Importance))
-                    .ThenBy(item => int.Parse(item.Difficulty))
-                    .ThenBy(item => item.Goal)
-                    .ThenBy(item => item.Steps)
-                    .ToList();
+                this.TodoList = todoSheetService.GetTodoItems(_sheetId, _todoListTabName, null);
             }
             catch (System.Net.Http.HttpRequestException requestEx)
             {
@@ -54,6 +46,40 @@ namespace ToDoListAlram.ModelView
             {
                 this.SetErrorDictionary("Load", "Operation", operationEx);
             }
+        }
+
+        public void CompleteTodoItems(List<TodoItem>? todoItems)
+        {
+            throw new NotImplementedException();
+            //if (todoItems == null || todoItems.Count == 0)
+            //{
+            //    return;
+            //}
+
+            //var updateValueRanges = this.GetCompleteTodoRequest(_todoListTabName, todoItems);
+            //this.todoSheetService.Spreadsheets.Values.BatchUpdate(updateValueRanges);
+        }
+
+        private BatchUpdateValuesRequest GetCompleteTodoRequest(string sheetName, List<TodoItem> todoItems, string columnCode = "F")
+        {
+            var valueRanges = new List<ValueRange>();
+            foreach (var item in todoItems)
+            {
+                valueRanges.Add(new ValueRange
+                {
+                    Range = $"{sheetName}|{columnCode}{item.GoogleSheetRowIndex}",
+                    Values = new List<IList<object>>
+                    {
+                        new List<object> { "TRUE" }
+                    }
+                });
+            }
+            var updateRequest = new BatchUpdateValuesRequest()
+            {
+                ValueInputOption = "USER_ENTERED",
+                Data = valueRanges
+            };
+            return updateRequest;
         }
 
         private void SetErrorDictionary(string taskType, string errorType, Exception ex)

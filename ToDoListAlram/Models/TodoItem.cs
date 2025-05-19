@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ToDoListAlram.Models
 {
-    internal class TodoItem
+    public class TodoItem
     {
         public static List<TodoItem> GetTestList()
         {
@@ -24,6 +24,9 @@ namespace ToDoListAlram.Models
             }
             return result;
         }
+
+        public int GoogleSheetRowIndex { get; set; }
+        public bool IsChecked { get; set; }
         public string Goal { get; set; } = "";
         public string Steps { get; set; } = "";
         public string Importance { get; set; } = "0";
@@ -35,7 +38,10 @@ namespace ToDoListAlram.Models
 
         public static TodoItem FromGoogleSheetRow(IList<object> row)
         {
-            if (row[4]?.ToString() == "TRUE")
+            string? isWaiting = row[4]?.ToString();
+            string? isCompleted = row[5]?.ToString();
+
+            if (isWaiting == "TRUE" && isCompleted == "FALSE")
             {
                 if (row.Count < 8 || String.IsNullOrEmpty(row[7].ToString()))
                 {

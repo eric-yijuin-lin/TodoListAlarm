@@ -32,20 +32,20 @@ namespace ToDoListAlram.Models.Services
         }
     }
 
-    public class GoogleSheetService
+    public class TodoSheetService
     {
-        private readonly SheetsService _service;
+        private readonly SheetsService _googleSheetService;
 
-        public GoogleSheetService(SheetsService service)
+        public TodoSheetService(SheetsService service)
         {
-            _service = service;
+            _googleSheetService = service;
         }
 
-        public IList<IList<object>> ReadSheet(string sheetId, string tabName, string? range)
+        private IList<IList<object>> ReadRawData(string sheetId, string tabName, string? range)
         {
             string rangeWithTab = String.IsNullOrEmpty(range) ? tabName : $"{tabName}|{range}";
             SpreadsheetsResource.ValuesResource.GetRequest request =
-                _service.Spreadsheets.Values.Get(sheetId, rangeWithTab);
+                _googleSheetService.Spreadsheets.Values.Get(sheetId, rangeWithTab);
             ValueRange response = request.Execute();
             IList<IList<object>> values = response.Values;
             if (values != null)
@@ -53,6 +53,26 @@ namespace ToDoListAlram.Models.Services
                 return values;
             }
             return new List<IList<object>>();
+        }
+
+        public List<TodoItem> GetTodoItems(string sheetId, string tabName, string? range = null)
+        {
+            var sheetRows = this.ReadRawData(sheetId, tabName, range);
+            var todoList = new List<TodoItem>();
+            for (int i = 1; i < sheetRows.Count; i++)
+            {
+                var row = sheetRows[i];
+                string? goal = row[0]?.ToString();
+                string? completed = row[5]?.ToString();
+                if (String.IsNullOrEmpty(goal) || completed == "TRUE")
+                {
+                    continue;
+                }
+                var todoItem = TodoItem.FromGoogleSheetRow(row);
+                todoItem.GoogleSheetRowIndex = i + 1;
+                todoList.Add(todoItem);
+            }
+            return todoList;
         }
         // TODO: public void SaveTodoItems(List<TodoItem> items) {}
     }

@@ -265,5 +265,13 @@ namespace ToDoListAlram
                 this.TodoDataGrid.ItemsSource = viewingList;
             }
         }
+
+        private void MarkCompleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            var checkedItems = this.mainViewModel.TodoList
+                .Where(row => row.IsChecked)
+                .ToList();
+            int debug = 0;
+        }
     }
 }
