@@ -44,10 +44,6 @@ namespace ToDoListAlram.ModelView
             {
                 this.SetErrorDictionary("Load", "Http", requestEx);
             }
-            catch (FormatException formatEx)
-            {
-                this.SetErrorDictionary("Load", "Format", formatEx);
-            }
             catch (InvalidOperationException operationEx)
             {
                 this.SetErrorDictionary("Load", "Operation", operationEx);

@@ -167,13 +167,11 @@ namespace ToDoListAlram.Models.Services
             for (int i = 1; i < sheetRows.Count; i++)
             {
                 var row = sheetRows[i];
-                string? goal = row[0]?.ToString();
-                string? completed = row[5]?.ToString();
-                if (String.IsNullOrEmpty(goal) || completed == "TRUE")
+                var todoItem = TodoItem.FromGoogleSheetRow(row);
+                if (todoItem.IsCompleted)
                 {
                     continue;
                 }
-                var todoItem = TodoItem.FromGoogleSheetRow(row);
                 todoItem.GoogleSheetRowIndex = i + 1;
                 todoList.Add(todoItem);
             }
