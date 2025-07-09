@@ -18,6 +18,7 @@ using ToDoListAlram.ModelView;
 using ToDoListAlram.View.Converters;
 using Google.Apis.Sheets.v4.Data;
 using System.ComponentModel;
+using Google.Apis.Sheets.v4;
 
 
 
@@ -29,6 +30,7 @@ namespace ToDoListAlram
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly TodoListService _todoService;
         private bool enableNotify = true;
         private string allowCloseKey = "";
         private MainViewModel mainViewModel;
@@ -39,10 +41,13 @@ namespace ToDoListAlram
 
         public MainWindow()
         {
+            string credPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Credentials", "google-sheet-api.json");
+            var sheetService = GoogleCredentialProvider.CreateSheetsApi(credPath);
+            _todoService = new TodoListService(sheetService);
+
             InitializeComponent();
             InitializeTodoList();
             InitializeTimer();
-            InitializeTodoList();
             InitializeClosingEvents();
             InitializeBypassGuard();
             this.UpdateStatusLabel();
@@ -54,7 +59,8 @@ namespace ToDoListAlram
 
         private void InitializeTodoList()
         {
-            this.mainViewModel = new MainViewModel();
+
+            this.mainViewModel = new MainViewModel(_todoService);
             this.ReloadTodoList();
         }
 

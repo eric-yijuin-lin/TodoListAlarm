@@ -1,4 +1,5 @@
 ﻿using Google;
+using Google.Apis.Sheets.v4;
 using Google.Apis.Sheets.v4.Data;
 using System;
 using System.Collections.Generic;
@@ -15,23 +16,21 @@ namespace ToDoListAlram.ModelView
     // TODO: 改成 INotifyPropertyChanged + ICommand 
     internal class MainViewModel
     {
-        private readonly TodoSheetService todoSheetService;
+        private readonly TodoListService _todoSheetService;
         public Dictionary<string, Dictionary<string, Exception>> errorDict = new ();
 
         public List<TodoItem> TodoList { get; private set; } = new List<TodoItem>();
 
-        public MainViewModel()
+        public MainViewModel(TodoListService todoSheetService)
         {
-            string credPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Credentials", "google-sheet-api.json");
-            var sheetApi = GoogleCredentialProvider.CreateSheetsApi(credPath);
-            this.todoSheetService = new TodoSheetService(sheetApi);
+            _todoSheetService = todoSheetService;
         }
 
         public void LoadTodoList()
         {
             try
             {
-                this.TodoList = todoSheetService
+                this.TodoList = _todoSheetService
                     .GetTodoItems()
                     .OrderBy(item => item.DueDate)
                     .ThenByDescending(item => int.Parse(item.Importance))
@@ -59,7 +58,7 @@ namespace ToDoListAlram.ModelView
 
             try
             {
-                this.todoSheetService.CompleteTodoItems(itemsToComplete);
+                _todoSheetService.CompleteTodoItems(itemsToComplete);
             }
             catch (System.Net.Http.HttpRequestException requestEx)
             {

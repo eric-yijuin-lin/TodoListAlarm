@@ -30,7 +30,7 @@ namespace ToDoListAlram.Models.Services
         }
     }
 
-    public class TodoSheetService
+    public class TodoListService
     {
         private readonly string _sheetId = "1DHrseaJEFdbsAcM3NP_UvyfMkjFuH82dYx6uH_v8Ov0";
         private readonly string _todoListTabName = "Todo";
@@ -39,8 +39,12 @@ namespace ToDoListAlram.Models.Services
         private readonly string _rewardCell = "H1";
         private readonly SheetsService _googleSheetService;
 
-        public TodoSheetService(SheetsService service)
+        public TodoListService(SheetsService? service)
         {
+            if (service == null)
+            {
+                throw new ArgumentNullException("Google Sheets API service 不可以為空.");
+            }
             _googleSheetService = service;
         }
 
