@@ -17,13 +17,17 @@ namespace ToDoListAlram.ModelView
     internal class MainViewModel
     {
         private readonly TodoListService _todoSheetService;
-        public Dictionary<string, Dictionary<string, Exception>> errorDict = new ();
+
+        private readonly Dictionary<string, Dictionary<string, Exception>> errorDict = new ();
+
+        public int RewardPoint { get; private set; }
 
         public List<TodoItem> TodoList { get; private set; } = new List<TodoItem>();
 
         public MainViewModel(TodoListService todoSheetService)
         {
             _todoSheetService = todoSheetService;
+            this.RewardPoint = _todoSheetService.GetCurrentRewardPoint();
         }
 
         public void LoadTodoList()

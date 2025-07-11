@@ -18,7 +18,6 @@ using ToDoListAlram.ModelView;
 using ToDoListAlram.View.Converters;
 using Google.Apis.Sheets.v4.Data;
 using System.ComponentModel;
-using Google.Apis.Sheets.v4;
 
 
 
@@ -51,6 +50,7 @@ namespace ToDoListAlram
             InitializeClosingEvents();
             InitializeBypassGuard();
             this.UpdateStatusLabel();
+            this.UpdateRewardPointLabel();
             this.Loaded += (s, e) =>
             {
                 this.BringWindowToFront();
@@ -155,10 +155,10 @@ namespace ToDoListAlram
         {
             var selectedItem = (ComboBoxItem)this.PauseTimeComboBox.SelectedItem;
             int pauseMinute = Convert.ToInt32(selectedItem.Tag.ToString()!);
-            string bypassResult = this.bypassGuard.RequestPause(this.BypassKeyInput.Text, pauseMinute);
+            var request = new BypassRequest(this.BypassKeyInput.Text, pauseMinute, this.mainViewModel.RewardPoint);
+            string bypassResult = this.bypassGuard.RequestPause(request);
             if (bypassResult != "OK")
             {
-
                 MessageBox.Show(bypassResult);
                 return;
             }
@@ -244,6 +244,12 @@ namespace ToDoListAlram
             // TODO: refactor to view model
             string pauseUntilString = enableNotify ? "N/A" : _pauseUntil.ToString("hh:mm:ss");
             this.StatusLabel.Content = $"暫停到={pauseUntilString}";
+        }
+
+        private void UpdateRewardPointLabel()
+        {
+            int rewardPoint = this.mainViewModel.RewardPoint;
+            this.RewardPointLabel.Content = $"獎勵點數：{rewardPoint}";
         }
 
         private void ReloadTodoList()

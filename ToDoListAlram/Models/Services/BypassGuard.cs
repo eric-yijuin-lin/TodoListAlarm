@@ -19,6 +19,49 @@ namespace ToDoListAlram.Models.Services
         ShuttingDown
     }
 
+    public enum BypassReasonEnum
+    {
+        ShortPause,
+        TomatoClock,
+        LongPause,
+        ConsumeReward,
+    }
+
+    public class BypassRequest
+    {
+        public BypassReasonEnum Reason { get; private set; }
+        public string InputText { get; set; } = "";
+        public int PauseMinute { get; set; }
+        public int RewardPoint { get; set; }
+
+        public BypassRequest(string text, int minute, int reward)
+        {
+            this.PauseMinute = minute;
+            this.InputText = text;
+            if (minute <= 10)
+            {
+                this.Reason = BypassReasonEnum.ShortPause;
+            }
+            else if (minute == 25)
+            {
+                this.Reason = BypassReasonEnum.TomatoClock;
+            }
+            else if (minute > 25)
+            {
+                this.Reason = BypassReasonEnum.LongPause;
+            }
+            else if (reward > 0)
+            {
+                this.Reason = BypassReasonEnum.ConsumeReward;
+                this.RewardPoint = reward;
+            }
+            else
+            {
+                throw new ArgumentException($"無法建立 Bypass Request text:{text}, minute:{minute}, reward:{reward}");
+            }
+        }
+    }
+
     internal class BypassGuard
     {
         private List<TodoItem>? todoList;
@@ -82,35 +125,56 @@ namespace ToDoListAlram.Models.Services
             return BitConverter.ToString(hash).Replace("-", "").ToLower();
         }
 
-        public string RequestPause(string inputText, int pauseMinute)
+        public string RequestPause(BypassRequest request)
         {
-            if (pauseMinute < 25)
+            string verifyResult = request.Reason switch
+            {
+                BypassReasonEnum.ShortPause => "OK",
+                BypassReasonEnum.TomatoClock => this.VerifyTomatoClock(request),
+                BypassReasonEnum.LongPause => this.VerifyLongPause(request),
+                BypassReasonEnum.ConsumeReward => this.VerifyConsumeReward(request),
+                _ => "未知的請求類型"
+            };
+            this.BypassPermission = verifyResult == "OK" 
+                ? BypassPermissionEnum.CanPause 
+                : BypassPermissionEnum.NotAllow;
+            return verifyResult;
+        }
+
+        private string VerifyTomatoClock(BypassRequest request)
+        {
+            if (request.InputText.ToLower() == "tomato")
             {
                 return "OK";
             }
-            if (pauseMinute == 25)
-            {
-                if (inputText == "tomato")
-                {
-                    return "OK";
-                }
-                else
-                {
-                    return "進入番茄鐘需要輸入「番茄」的英文";
-                }
-            }
+            return "請輸入番茄的英文啟動番茄鐘";
+        }
+
+        private string VerifyLongPause(BypassRequest request)
+        {
             if (this.HasUrgentTodoItem)
             {
                 return "待辦清單中有緊急事項，無法暫停超過 25 分鐘";
             }
+            return this.VerifyMd5BypassKey(request.InputText);
+        }
 
+        private string VerifyConsumeReward(BypassRequest request)
+        {
+            if (request.PauseMinute > request.RewardPoint)
+            {
+                return $"獎勵點數不足！(目前剩餘 {request.RewardPoint} 點)";
+            }
+            return this.VerifyMd5BypassKey(request.InputText);
+        }
+
+        private string VerifyMd5BypassKey(string inputText)
+        {
             string bypassKey = this.GetMd5BypassKey(DateTime.Now);
             if (inputText == bypassKey)
             {
-                this.BypassPermission = BypassPermissionEnum.CanPause;
                 return "OK";
             }
-            this.BypassPermission = BypassPermissionEnum.NotAllow;
             return "密碼錯誤 (yyyyMMddHHm 十一碼的 MD5)";
         }
 

@@ -37,6 +37,7 @@ namespace ToDoListAlram.Models.Services
         private readonly string _rewardTabName = "獎勵";
         private readonly string _completedColumnCode = "F";
         private readonly string _rewardCell = "H1";
+        private readonly string _currentPointRange = $"獎勵!H1";
         private readonly SheetsService _googleSheetService;
 
         public TodoListService(SheetsService? service)
@@ -113,8 +114,7 @@ namespace ToDoListAlram.Models.Services
 
         private UpdateValuesResponse UpdateRewardPoint(List<TodoItem> itemsToComplete)
         {
-            string currentPointRange = $"{_rewardTabName}!{_rewardCell}";
-            int currentPoint = this.GetCurrentRewardPoint(currentPointRange);
+            int currentPoint = this.GetCurrentRewardPoint();
             int addPoint = itemsToComplete.Sum(x => Convert.ToInt32(x.Difficulty) * Convert.ToInt32(x.Importance));
             var valueRange = new ValueRange
             {
@@ -126,7 +126,7 @@ namespace ToDoListAlram.Models.Services
                     }
                 }
             };
-            var request = _googleSheetService.Spreadsheets.Values.Update(valueRange, _sheetId, currentPointRange);
+            var request = _googleSheetService.Spreadsheets.Values.Update(valueRange, _sheetId, _currentPointRange);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             return request.Execute();
         }
@@ -153,9 +153,9 @@ namespace ToDoListAlram.Models.Services
             return updateRequest;
         }
 
-        private int GetCurrentRewardPoint(string currentPointRange)
+        public int GetCurrentRewardPoint()
         {
-            var response = _googleSheetService.Spreadsheets.Values.Get(_sheetId, currentPointRange).Execute();
+            var response = _googleSheetService.Spreadsheets.Values.Get(_sheetId, _currentPointRange).Execute();
             string? rawValue = response?.Values?.FirstOrDefault()?.FirstOrDefault()?.ToString();
             if (!Int32.TryParse(rawValue, out int currentPoint))
             {
