@@ -78,6 +78,33 @@ namespace ToDoListAlram.ModelView
             }
         }
 
+        public void ConsumeRewardPoint(int point)
+        {
+            if (point > this.RewardPoint)
+            {
+                this.SetErrorDictionary("Consume", "Check",
+                    new InvalidOperationException($"點數不足，目前點數: {this.RewardPoint}"));
+                return;
+            }
+            try
+            {
+                _todoSheetService.ConsumeRewardPoint(point);
+            }
+            catch (System.Net.Http.HttpRequestException requestEx)
+            {
+                this.SetErrorDictionary("Consume", "Http", requestEx);
+            }
+            catch (GoogleApiException googleEx)
+            {
+                this.SetErrorDictionary("Consume", "Api", googleEx);
+            }
+            catch (InvalidOperationException operationEx)
+            {
+                this.SetErrorDictionary("Consume", "Operation", operationEx);
+            }
+            this.RewardPoint -= point;
+        }
+
         private void SetErrorDictionary(string taskType, string errorType, Exception ex)
         {
             if (!this.errorDict.ContainsKey(taskType))

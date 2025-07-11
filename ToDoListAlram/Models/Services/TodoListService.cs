@@ -64,15 +64,36 @@ namespace ToDoListAlram.Models.Services
 
         public void CompleteTodoItems(List<TodoItem> itemsToComplete)
         {
+            int addPoint = itemsToComplete.Sum(x => Convert.ToInt32(x.Difficulty) * Convert.ToInt32(x.Importance));
             var updateStatusResponse = this.UpdateCompletedStatus(itemsToComplete);
             var appendRecordResponse = this.AppendCompletedRecord(itemsToComplete);
-            var updatePointResponse = this.UpdateRewardPoint(itemsToComplete);
+            var updatePointResponse = this.UpdateRewardPoint(addPoint);
             if (updateStatusResponse.TotalUpdatedRows <= 0
                 || appendRecordResponse.Updates.UpdatedRows <= 0
                 || updatePointResponse.UpdatedRows <= 0)
             {
                 throw new InvalidOperationException("更新 Todo、寫入 Record 或更新點數出現 0 affected response");
             }
+        }
+
+        public void ConsumeRewardPoint(int consumePoint)
+        {
+            var updateResponse = this.UpdateRewardPoint(consumePoint * -1);
+            if (updateResponse.UpdatedRows <= 0)
+            {
+                throw new InvalidOperationException("更新獎勵點出現 0 affected response");
+            }
+            this.AppendCompletedRecord(new List<TodoItem>
+            {
+                new TodoItem
+                {
+                    Goal = "消耗獎勵點",
+                    Importance = consumePoint.ToString(),
+                    Difficulty = "-1",
+                    IsCompleted = true,
+                    Remarks = ""
+                }
+            });
         }
 
         private ValueRange GetAppendRewardValueRange(List<TodoItem> itemsToComplete)
@@ -112,20 +133,20 @@ namespace ToDoListAlram.Models.Services
             return response;
         }
 
-        private UpdateValuesResponse UpdateRewardPoint(List<TodoItem> itemsToComplete)
+        private UpdateValuesResponse UpdateRewardPoint(int changeAmount)
         {
             int currentPoint = this.GetCurrentRewardPoint();
-            int addPoint = itemsToComplete.Sum(x => Convert.ToInt32(x.Difficulty) * Convert.ToInt32(x.Importance));
             var valueRange = new ValueRange
             {
                 Values = new List<IList<object>>
                 {
                     new List<object>
                     {
-                        currentPoint + addPoint
+                        currentPoint + changeAmount
                     }
                 }
             };
+
             var request = _googleSheetService.Spreadsheets.Values.Update(valueRange, _sheetId, _currentPointRange);
             request.ValueInputOption = SpreadsheetsResource.ValuesResource.UpdateRequest.ValueInputOptionEnum.USERENTERED;
             return request.Execute();

@@ -32,13 +32,16 @@ namespace ToDoListAlram.Models.Services
         public BypassReasonEnum Reason { get; private set; }
         public string InputText { get; set; } = "";
         public int PauseMinute { get; set; }
-        public int RewardPoint { get; set; }
 
-        public BypassRequest(string text, int minute, int reward)
+        public BypassRequest(string text, int minute, bool isConsumeReward)
         {
             this.PauseMinute = minute;
             this.InputText = text;
-            if (minute <= 10)
+            if (isConsumeReward)
+            {
+                this.Reason = BypassReasonEnum.ConsumeReward;
+            }
+            else if (minute <= 10)
             {
                 this.Reason = BypassReasonEnum.ShortPause;
             }
@@ -50,14 +53,9 @@ namespace ToDoListAlram.Models.Services
             {
                 this.Reason = BypassReasonEnum.LongPause;
             }
-            else if (reward > 0)
-            {
-                this.Reason = BypassReasonEnum.ConsumeReward;
-                this.RewardPoint = reward;
-            }
             else
             {
-                throw new ArgumentException($"無法建立 Bypass Request text:{text}, minute:{minute}, reward:{reward}");
+                throw new ArgumentException($"無法建立 Bypass Request text:{text}, minute:{minute}, isConsumeReward:{isConsumeReward}");
             }
         }
     }
@@ -161,9 +159,13 @@ namespace ToDoListAlram.Models.Services
 
         private string VerifyConsumeReward(BypassRequest request)
         {
-            if (request.PauseMinute > request.RewardPoint)
+            if (request.PauseMinute < 30)
             {
-                return $"獎勵點數不足！(目前剩餘 {request.RewardPoint} 點)";
+                return "銷點至少需要銷 30 分鐘 (15點)";
+            }
+            if (String.IsNullOrEmpty(request.InputText))
+            {
+                return "珍惜點數！銷點暫停也要輸入 MD5 密碼";
             }
             return this.VerifyMd5BypassKey(request.InputText);
         }

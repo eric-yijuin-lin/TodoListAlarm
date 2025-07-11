@@ -154,13 +154,28 @@ namespace ToDoListAlram
         private void PauseButton_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = (ComboBoxItem)this.PauseTimeComboBox.SelectedItem;
+            bool isUsingRewardPoint = this.UseRewardCheckBox.IsChecked == true;
             int pauseMinute = Convert.ToInt32(selectedItem.Tag.ToString()!);
-            var request = new BypassRequest(this.BypassKeyInput.Text, pauseMinute, this.mainViewModel.RewardPoint);
+            var request = new BypassRequest(this.BypassKeyInput.Text, pauseMinute, isUsingRewardPoint);
             string bypassResult = this.bypassGuard.RequestPause(request);
+
             if (bypassResult != "OK")
             {
                 MessageBox.Show(bypassResult);
                 return;
+            }
+            if (isUsingRewardPoint) // TODO: 想想怎麼重構比較漂亮
+            {
+                int consumePoint = pauseMinute / 2;
+                this.mainViewModel.ConsumeRewardPoint(consumePoint);
+                if (mainViewModel.HasError("Consume"))
+                {
+                    string message = mainViewModel.GetErrorMessage("Update");
+                    MessageBox.Show(message);
+                    return;
+                }
+                this.UpdateRewardPointLabel();
+                this.UseRewardCheckBox.IsChecked = false;
             }
             this.PauseNotify(pauseMinute * 60);
             this.Topmost = false;
