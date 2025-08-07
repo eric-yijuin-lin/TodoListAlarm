@@ -62,7 +62,8 @@ namespace ToDoListAlram.ModelView
 
             try
             {
-                _todoSheetService.CompleteTodoItems(itemsToComplete);
+                int addedPoint = _todoSheetService.CompleteTodoItems(itemsToComplete);
+                this.RewardPoint += addedPoint;
             }
             catch (System.Net.Http.HttpRequestException requestEx)
             {
@@ -117,6 +118,11 @@ namespace ToDoListAlram.ModelView
         public bool HasError(string taskType)
         {
             return this.errorDict.ContainsKey(taskType) && this.errorDict[taskType].Any();
+        }
+
+        public void ClearErrorDictionary()
+        {
+            this.errorDict.Clear();
         }
 
         public string GetErrorMessage(string taskType, bool flush = true)

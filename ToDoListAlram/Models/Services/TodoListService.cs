@@ -62,7 +62,7 @@ namespace ToDoListAlram.Models.Services
             return new List<IList<object>>();
         }
 
-        public void CompleteTodoItems(List<TodoItem> itemsToComplete)
+        public int CompleteTodoItems(List<TodoItem> itemsToComplete)
         {
             int addPoint = itemsToComplete.Sum(x => Convert.ToInt32(x.Difficulty) * Convert.ToInt32(x.Importance));
             var updateStatusResponse = this.UpdateCompletedStatus(itemsToComplete);
@@ -74,6 +74,7 @@ namespace ToDoListAlram.Models.Services
             {
                 throw new InvalidOperationException("更新 Todo、寫入 Record 或更新點數出現 0 affected response");
             }
+            return addPoint;
         }
 
         public void ConsumeRewardPoint(int consumePoint)

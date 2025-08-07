@@ -307,6 +307,7 @@ namespace ToDoListAlram
                 return;
             }
             this.ReloadTodoList();
+            this.UpdateRewardPointLabel();
         }
     }
 }
