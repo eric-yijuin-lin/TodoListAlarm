@@ -53,6 +53,22 @@ namespace ToDoListAlram.ModelView
             }
         }
 
+        public void LoadRewardPoint()
+        {
+            try
+            {
+                this.RewardPoint = _todoSheetService.GetCurrentRewardPoint();
+            }
+            catch (System.Net.Http.HttpRequestException requestEx)
+            {
+                this.SetErrorDictionary("GetPoint", "Http", requestEx);
+            }
+            catch (InvalidOperationException operationEx)
+            {
+                this.SetErrorDictionary("GetPoint", "Operation", operationEx);
+            }
+        }
+
         public void CompleteTodoItems(List<TodoItem> itemsToComplete)
         {
             if (itemsToComplete.Count == 0)

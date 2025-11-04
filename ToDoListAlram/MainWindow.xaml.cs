@@ -209,6 +209,7 @@ namespace ToDoListAlram
         private void ReloadDataButton_Click(object sender, RoutedEventArgs e)
         {
             this.ReloadTodoList();
+            this.ReloadRewardPoint();
             this.bypassGuard.ResetTodoList(this.mainViewModel.TodoList);
         }
 
@@ -277,6 +278,18 @@ namespace ToDoListAlram
                 return;
             }
             this.TodoDataGrid.ItemsSource = this.mainViewModel.TodoList;
+        }
+
+        private void ReloadRewardPoint()
+        {
+            this.mainViewModel.LoadRewardPoint();
+            if (mainViewModel.HasError("GetPoint"))
+            {
+                string message = mainViewModel.GetErrorMessage("GetPoint");
+                MessageBox.Show(message);
+                return;
+            }
+            this.UpdateRewardPointLabel();
         }
 
         private void FilterRadio_Checked(object sender, RoutedEventArgs e)
