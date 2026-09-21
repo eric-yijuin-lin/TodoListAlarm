@@ -170,7 +170,7 @@ namespace ToDoListAlram
                 this.mainViewModel.ConsumeRewardPoint(consumePoint);
                 if (mainViewModel.HasError("Consume"))
                 {
-                    string message = mainViewModel.GetErrorMessage("Update");
+                    string message = mainViewModel.GetErrorMessage("Consume");
                     MessageBox.Show(message);
                     return;
                 }

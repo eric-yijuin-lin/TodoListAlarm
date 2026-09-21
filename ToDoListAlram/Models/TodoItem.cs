@@ -88,7 +88,7 @@ namespace ToDoListAlram.Models
                 Difficulty = row[3]?.ToString()!,
                 IsWaiting = Convert.ToBoolean(row[4]?.ToString()!),
                 IsCompleted = Convert.ToBoolean(row[5]?.ToString()!),
-                DueDate = DateTime.Parse(row[6]?.ToString()!),
+                DueDate = DateTime.Parse(row[6]?.ToString()!).AddHours(17),
                 Remarks = row.Count == 8 ? row[7]?.ToString() : "",
             };
         }
